@@ -22,14 +22,24 @@ class BaseLayer:
                  weight_functions: tuple,
                  weight_function_order: int,
                  include_bias: bool):
-        pass
+        self.number_of_units = number_of_units
+        self.activation_function, self.d_activation_function = \
+            ActivationFunctions.get(activation_function)
+        self.weight_function, self.d_weight_function = weight_functions
+        self.weight_function_order = weight_function_order
+        self.include_bias = include_bias
+        self.weights = None
+        self.bias = None
 
-    def forward_calculation(self, input):
+    def forward_calculation(self, A_prev):
         # Arguments:
-        #   input: List. Output from previous layer
+        #   A_prev: List. Output from previous layer
         # Return: single value of forward pass
 
-        pass
+        Wx = self.weight_function(self.weights, A_prev)
+        self.Z = Wx + self.bias if self.include_bias else Wx
+
+        return self.activation_function(self.Z)
 
     def backward_calculation(self, previous_derivative) -> tuple:
         # Arguments:
@@ -37,7 +47,7 @@ class BaseLayer:
         # Return: tuple of dw and dx
 
         pass
-    
+
     def update_weights(self, learning_rate, gradient):
         # Arguments:
         #   learning_rate: Double.
@@ -45,3 +55,7 @@ class BaseLayer:
 
         pass
 
+    def initialize_weights(self, prev_layer_shape):
+        self.weights = 2 * np.random.rand(prev_layer_shape, self.number_of_units) - 1
+        if include_bias:
+            self.bias = 2 * np.random.rand(self.number_of_units) - 1
