@@ -51,10 +51,9 @@ class BaseLayer:
         dZ = self.d_activation_function(previous_derivative, self.Z)
         db = np.sum(dZ, axis = 1, keepdims = True) if self.include_bias else np.zeros()
 
-        dW, dA = self.derivative(dZ)
+        dW, dA = self.derivative(dz = dZ)
 
         return (dA, dW, db)
-        
 
     def update_weights(self, learning_rate, gradient):
         # Arguments:
@@ -64,8 +63,7 @@ class BaseLayer:
         self.weights -= learning_rate * gradient[0]
         self.bias -= learning_rate * gradient[1] if self.include_bias else 0
 
-
     def initialize_weights(self, prev_layer_shape):
         self.weights = 2 * np.random.rand(self.number_of_units, prev_layer_shape,) - 1
-        if include_bias:
+        if self.include_bias:
             self.bias = 2 * np.random.rand(self.number_of_units, 1) - 1
