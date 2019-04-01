@@ -7,7 +7,7 @@ class ActivationFunctions:
     """
 
     def Relu(z):
-        return np.mazimum(z, 0)
+        return np.maximum(z, 0)
 
     def dRelu(dA, z):
         d_z = dA.copy()
@@ -15,7 +15,7 @@ class ActivationFunctions:
         return d_z
 
     def Sigmoid(z):
-        return 1. / (1 + np.ezp(-z))
+        return 1. / (1 + np.exp(-z))
 
     def dSigmoid(dA, z):
         sigmoid_z = Sigmoid(z)

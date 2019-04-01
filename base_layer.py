@@ -1,4 +1,5 @@
-from activation_functions import ActivationFunctions
+from activation_functions import *
+from functools import partial 
 
 class BaseLayer:
     """
@@ -36,7 +37,8 @@ class BaseLayer:
         #   A_prev: List. Output from previous layer
         # Return: single value of forward pass
 
-        Wx = self.weight_function(self.weights, A_prev)
+        Wx = self.weight_function(self.weights, A_prev) # M N * N 1 = M 1 
+        self.derivative = partial(self.d_weight_function, W = self.weights, x = A_prev)
         self.Z = Wx + self.bias if self.include_bias else Wx
 
         return self.activation_function(self.Z)
@@ -46,16 +48,24 @@ class BaseLayer:
         #   previous_derivative: List. Derivative of next layer
         # Return: tuple of dw and dx
 
-        pass
+        dZ = self.d_activation_function(previous_derivative, self.Z)
+        db = np.sum(dZ, axis = 1, keepdims = True) if self.include_bias else np.zeros()
+
+        dW, dA = self.derivative(dZ)
+
+        return (dA, dW, db)
+        
 
     def update_weights(self, learning_rate, gradient):
         # Arguments:
         #   learning_rate: Double.
-        #   gradient: List. 
+        #   gradient: List. dW db 
 
-        pass
+        self.weights -= learning_rate * gradient[0]
+        self.bias -= learning_rate * gradient[1] if self.include_bias else 0
+
 
     def initialize_weights(self, prev_layer_shape):
-        self.weights = 2 * np.random.rand(prev_layer_shape, self.number_of_units) - 1
+        self.weights = 2 * np.random.rand(self.number_of_units, prev_layer_shape,) - 1
         if include_bias:
-            self.bias = 2 * np.random.rand(self.number_of_units) - 1
+            self.bias = 2 * np.random.rand(self.number_of_units, 1) - 1
