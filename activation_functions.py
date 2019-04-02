@@ -11,7 +11,7 @@ class ActivationFunctions:
 
     def dRelu(dA, z):
         d_z = dA.copy()
-        d_z[d_z < 0] = 0
+        d_z[z <= 0] = 0
         return d_z
 
     def Sigmoid(z):

@@ -9,7 +9,7 @@ class MambaNet:
         # Arguments:
         #   z: predict matrix (num_classes x num_examples)
         # Returns: softmaxed result (num_classes x num_examples)
-        exps = np.exp(z - np.max(z, axis=0))
+        exps = np.exp(z - np.max(z, axis = 0))
 
         return exps / np.sum(exps, axis = 0)
 
@@ -89,6 +89,10 @@ class MambaNet:
               learning_rate=0.1):
 
         y = np.array(y)
+
+        current_accuracy = self.count_accuracy(x, y)
+
+        print ("Epoch %d, Acc: %.5f" % (-1, current_accuracy))
 
         for epoch in range(n_epochs):
             chunks_x, chunks_y = self._split_data(batch_size, x, y)

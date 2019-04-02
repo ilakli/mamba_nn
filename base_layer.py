@@ -1,4 +1,5 @@
 from activation_functions import *
+from weight_initializators import *
 from functools import partial 
 
 class BaseLayer:
@@ -20,12 +21,15 @@ class BaseLayer:
     def __init__(self, 
                  number_of_units: int, 
                  activation_function: str, 
+                 initialization_function: str,
                  weight_functions: tuple,
                  weight_function_order: int,
                  include_bias: bool):
         self.number_of_units = number_of_units
         self.activation_function, self.d_activation_function = \
             ActivationFunctions.get(activation_function)
+        self.weight_initialization = \
+            WeightInitializators.get(initialization_function)
         self.weight_function, self.d_weight_function = weight_functions
         self.weight_function_order = weight_function_order
         self.include_bias = include_bias
@@ -64,6 +68,6 @@ class BaseLayer:
         self.bias = self.bias - learning_rate * gradient[1] if self.include_bias else self.bias
  
     def initialize_weights(self, prev_layer_shape):
-        self.weights = 2 * np.random.rand(self.number_of_units, prev_layer_shape) - 1
+        self.weights = self.weight_initialization((self.number_of_units, prev_layer_shape), prev_layer_shape)
         if self.include_bias:
-            self.bias = 2 * np.random.rand(self.number_of_units, 1) - 1
+            self.bias = self.weight_initialization((self.number_of_units, 1), prev_layer_shape)

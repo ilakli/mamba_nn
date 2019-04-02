@@ -21,32 +21,41 @@ def main():
     for x in range(100):
         for y in range(100):
 
-            q = x
-            p = y
-
-            features = np.array([p, q])
+            features = np.array([y, x])
             if all_features is not None:
                 all_features = np.vstack((all_features, features))
             else:
                 all_features = features.copy()
- 
-            if p > q:
+
+            if x > 75 and y > 50:
                 data_y.append(0)
             else:
                 data_y.append(1)
  
     all_features = np.transpose(all_features)
  
-    kobi = MambaNet(13)
-    layer1 = BaseLayer(3, "sigmoid", 
+    kobi = MambaNet(24)
+    # layer1 = BaseLayer(3, "sigmoid", "tupoi",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
+    #                    True)
+    # layer2 = BaseLayer(3, "sigmoid", "tupoi",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
+    #                    True)
+    # layer3 = BaseLayer(2, "sigmoid", "tupoi",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
+    #                    True)
+    layer1 = BaseLayer(3, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True)
-    layer2 = BaseLayer(3, "sigmoid", 
+    layer2 = BaseLayer(3, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True)
-    layer3 = BaseLayer(2, "sigmoid", 
+    layer3 = BaseLayer(2, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True)
@@ -56,7 +65,7 @@ def main():
 
     kobi.compile(2, 2)
 
-    kobi.train(all_features, data_y, n_epochs = 50)
+    kobi.train(all_features, data_y, n_epochs = 5000, learning_rate=0.005)
 
 if __name__ == '__main__':
     main()
