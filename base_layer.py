@@ -60,10 +60,10 @@ class BaseLayer:
         #   learning_rate: Double.
         #   gradient: List. dW db 
 
-        self.weights -= learning_rate * gradient[0]
-        self.bias -= learning_rate * gradient[1] if self.include_bias else 0
-
+        self.weights = self.weights - learning_rate * gradient[0]
+        self.bias = self.bias - learning_rate * gradient[1] if self.include_bias else self.bias
+ 
     def initialize_weights(self, prev_layer_shape):
-        self.weights = 2 * np.random.rand(self.number_of_units, prev_layer_shape,) - 1
+        self.weights = 2 * np.random.rand(self.number_of_units, prev_layer_shape) - 1
         if self.include_bias:
             self.bias = 2 * np.random.rand(self.number_of_units, 1) - 1

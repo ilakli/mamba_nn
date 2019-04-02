@@ -9,7 +9,7 @@ class MambaNet:
         # Arguments:
         #   z: predict matrix (num_classes x num_examples)
         # Returns: softmaxed result (num_classes x num_examples)
-        exps = np.exp(z - np.max(z))
+        exps = np.exp(z - np.max(z, axis=0))
 
         return exps / np.sum(exps, axis = 0)
 
@@ -71,8 +71,13 @@ class MambaNet:
         A_curr = X.copy()
 
         for layer in self.layers:
+            # print ("A_curr in predict:")
+            # print (A_curr)
             A_curr = layer.forward_calculation(A_curr)
 
+        # print("A_curr before finish!!!")    
+        # print(A_curr)    
+ 
         return MambaNet.Softmax(A_curr)
 
     def train(self,
@@ -81,7 +86,7 @@ class MambaNet:
               validation_split=0.,
               n_epochs=50,
               batch_size=100,
-              learning_rate=0.01):
+              learning_rate=0.1):
 
         y = np.array(y)
 
@@ -94,6 +99,9 @@ class MambaNet:
 
                 loss = MambaNet.CrossEntropy(predicted_y, chunk_y)
                 loss_gradient = MambaNet.dCrossEntropy(predicted_y, chunk_y)
+
+                # print(loss_gradient)
+
                 self._do_backprop(loss_gradient, learning_rate)
             
             current_accuracy = self.count_accuracy(x, y)
