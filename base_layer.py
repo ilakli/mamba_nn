@@ -33,7 +33,7 @@ class BaseLayer:
         self.weight_function, self.d_weight_function = weight_functions
         self.weight_function_order = weight_function_order
         self.include_bias = include_bias
-        self.weights = None
+        self.weights = []
         self.bias = None
 
     def forward_calculation(self, A_prev):
@@ -63,11 +63,12 @@ class BaseLayer:
         # Arguments:
         #   learning_rate: Double.
         #   gradient: List. dW db 
-
         self.weights = self.weights - learning_rate * gradient[0]
         self.bias = self.bias - learning_rate * gradient[1] if self.include_bias else self.bias
  
     def initialize_weights(self, prev_layer_shape):
-        self.weights = self.weight_initialization((self.number_of_units, prev_layer_shape), prev_layer_shape)
+        for i in range(self.weight_function_order):
+            self.weights.append(self.weight_initialization((self.number_of_units, prev_layer_shape), prev_layer_shape))
+        self.weights = np.array(self.weights)    
         if self.include_bias:
             self.bias = self.weight_initialization((self.number_of_units, 1), prev_layer_shape)
