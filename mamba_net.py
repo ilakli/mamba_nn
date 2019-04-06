@@ -71,31 +71,35 @@ class MambaNet:
         A_curr = X.copy()
 
         for layer in self.layers:
-            # print ("A_curr in predict:")
-            # print (A_curr)
             A_curr = layer.forward_calculation(A_curr)
 
-        # print("A_curr before finish!!!")    
-        # print(A_curr)    
- 
         return MambaNet.Softmax(A_curr)
 
     def train(self,
               x, y,
               validation_data=None,
-              validation_split=0.,
+              validation_split=0.2,
               n_epochs=50,
               batch_size=100,
               learning_rate=0.1):
 
         y = np.array(y)
 
-        current_accuracy = self.count_accuracy(x, y)
+        if not validation_data:
+            train_x, train_y, val_x, val_y = \
+                self._get_validation_data((x, y), validation_split)
+        else:
+            train_x = np.array(x)
+            train_y = np.array(y)
+            val_x, val_y = validation_data
 
-        print ("Epoch %d, Acc: %.5f" % (-1, current_accuracy))
+        train_acc = self.count_accuracy(train_x, train_y)
+        val_acc = self.count_accuracy(val_x, val_y)
+
+        print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (-1, train_acc, val_acc))
 
         for epoch in range(n_epochs):
-            chunks_x, chunks_y = self._split_data(batch_size, x, y)
+            chunks_x, chunks_y = self._split_data(batch_size, train_x, train_y)
 
             for chunk_x, chunk_y in zip(chunks_x, chunks_y):
 
@@ -104,13 +108,12 @@ class MambaNet:
                 loss = MambaNet.CrossEntropy(predicted_y, chunk_y)
                 loss_gradient = MambaNet.dCrossEntropy(predicted_y, chunk_y)
 
-                # print(loss_gradient)
-
                 self._do_backprop(loss_gradient, learning_rate)
             
-            current_accuracy = self.count_accuracy(x, y)
+            train_acc = self.count_accuracy(train_x, train_y)
+            val_acc = self.count_accuracy(val_x, val_y)
 
-            print ("Epoch %d, Acc: %.5f" % (epoch, current_accuracy))
+            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (epoch, train_acc, val_acc))
 
     def test(self, x, y):
         pass
@@ -123,6 +126,17 @@ class MambaNet:
         acc = np.sum(sparse_predicted_y == y) / len(y)
 
         return acc
+
+    def _get_validation_data(self, data, validation_split):
+        # TODO come up with better data split algorithm.
+
+        validation_offset = int(len(data[1]) * validation_split)
+        val_x = data[0][:, :validation_offset]
+        val_y = data[1][:validation_offset]
+        train_x = data[0][:, validation_offset:]
+        train_y = data[1][validation_offset:]
+
+        return train_x, train_y, val_x, val_y
 
     def _split_data(self, batch_size, x, y):
         n_iterations = x.shape[1] // batch_size
