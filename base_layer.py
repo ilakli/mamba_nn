@@ -24,7 +24,8 @@ class BaseLayer:
                  initialization_function: str,
                  weight_functions: tuple,
                  weight_function_order: int,
-                 include_bias: bool):
+                 include_bias: bool,
+                 l2_regularization_rate: float = 0.001):
         self.number_of_units = number_of_units
         self.activation_function, self.d_activation_function = \
             ActivationFunctions.get(activation_function)
@@ -35,6 +36,7 @@ class BaseLayer:
         self.include_bias = include_bias
         self.weights = []
         self.bias = None
+        self.l2_regularization_rate = l2_regularization_rate
 
     def forward_calculation(self, A_prev):
         # Arguments:
@@ -63,7 +65,7 @@ class BaseLayer:
         # Arguments:
         #   learning_rate: Double.
         #   gradient: List. dW db 
-        self.weights = self.weights - learning_rate * gradient[0]
+        self.weights = self.weights - learning_rate * gradient[0] - self.l2_regularization_rate * self.weights
         self.bias = self.bias - learning_rate * gradient[1] if self.include_bias else self.bias
  
     def initialize_weights(self, prev_layer_shape):

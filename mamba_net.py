@@ -1,4 +1,5 @@
 from base_layer import *
+import time
 
 class MambaNet:
     """
@@ -81,7 +82,8 @@ class MambaNet:
               validation_split=0.2,
               n_epochs=50,
               batch_size=100,
-              learning_rate=0.1):
+              learning_rate=0.1,
+              regularization_rate = 0.01):
 
         y = np.array(y)
 
@@ -97,10 +99,10 @@ class MambaNet:
         val_acc = self.count_accuracy(val_x, val_y)
 
         print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (-1, train_acc, val_acc))
-
+        train_start_time = time.time()
         for epoch in range(n_epochs):
             chunks_x, chunks_y = self._split_data(batch_size, train_x, train_y)
-
+            epoch_start_time = time.time()
             for chunk_x, chunk_y in zip(chunks_x, chunks_y):
 
                 predicted_y = self.predict(chunk_x)
@@ -112,8 +114,10 @@ class MambaNet:
             
             train_acc = self.count_accuracy(train_x, train_y)
             val_acc = self.count_accuracy(val_x, val_y)
-
-            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (epoch, train_acc, val_acc))
+            epoch_end_time = time.time()
+            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, epoch took time: %.5f, from start: %.5f" % \
+                 (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
+        print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
 
     def test(self, x, y):
         pass

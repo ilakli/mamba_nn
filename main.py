@@ -4,6 +4,7 @@ from random import randint
 import random
 import pickle
 import os.path
+import time
 
 def linear_weight_function(W, x):
     A = np.matmul(W[0], x)
@@ -21,7 +22,7 @@ def quadratic_weight_function(W, x):
 def d_quadratic_weight_function(W, x, dz):
     dW0 = np.matmul(dz, np.transpose(x**2))
     dW1 = np.matmul(dz, x.T)
-    dX = np.matmul(W[0].T, dz) + np.matmul(W[1].T, dz)
+    dX = 2 * np.matmul(W[0].T, dz) * x + np.matmul(W[1].T, dz)
     return (np.array([dW0, dW1]), dX)
 
 def create_simple_dataset():
@@ -68,9 +69,10 @@ def main():
     cifar_x, cifar_y = get_cifar_dataset("data_batch_1")
 
     layer1 = BaseLayer(128, "relu", "xavier",
-                       (linear_weight_function, d_linear_weight_function),
-                       1,
-                       True)
+                       (quadratic_weight_function, d_quadratic_weight_function),
+                       2,
+                       True,
+                       0.0005)
     layer2 = BaseLayer(64, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
@@ -84,8 +86,7 @@ def main():
     kobi.add(layer3)
 
     kobi.compile(3072, 10)
-
-    kobi.train(cifar_x, cifar_y, n_epochs = 50, learning_rate=0.005)
+    kobi.train(cifar_x, cifar_y, n_epochs = 5, learning_rate=0.01)   
 
 if __name__ == '__main__':
     main()
