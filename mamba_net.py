@@ -69,12 +69,42 @@ class MambaNet:
         # Arguments:
         #   X: input matrix (num_feature x num_examples)
         # Returns: predict matrix (num_classes x num_examples)
-        A_curr = X.copy()
+        A_curr = X
 
         for layer in self.layers:
             A_curr = layer.forward_calculation(A_curr)
 
         return MambaNet.Softmax(A_curr)
+
+    def train_from_files(self,
+              file_pathes,
+              validation_data_path,
+              dataset_reader,
+              n_epochs=50,
+              batch_size=100,
+              learning_rate=0.1):
+        
+        val_x, val_y = dataset_reader(validation_data_path)
+
+        for epoch in range(n_epochs):
+            acc_sum = 0.0
+            for file_path in file_pathes:
+                current_x, current_y = dataset_reader(file_path)
+                self.train(current_x, current_y, 
+                    validation_data=None, 
+                    validation_split=0, 
+                    n_epochs=1, 
+                    batch_size=batch_size, 
+                    learning_rate=learning_rate, 
+                    verbose=0)
+                
+                acc_sum += self.count_accuracy(current_x, current_y)
+            
+            avg_acc = acc_sum / len(file_pathes)
+
+            val_acc = self.count_accuracy(val_x, val_y)
+
+            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (epoch, avg_acc, val_acc))
 
     def train(self,
               x, y,
@@ -83,22 +113,27 @@ class MambaNet:
               n_epochs=50,
               batch_size=100,
               learning_rate=0.1,
-              regularization_rate = 0.01):
+              verbose=1):
 
         y = np.array(y)
 
-        if not validation_data:
+        if not validation_data and validation_split > 0:
             train_x, train_y, val_x, val_y = \
                 self._get_validation_data((x, y), validation_split)
         else:
-            train_x = np.array(x)
-            train_y = np.array(y)
-            val_x, val_y = validation_data
+            train_x = x
+            train_y = y
+            if validation_split == 0:
+                val_x, val_y = None, None
+            else:
+                val_x, val_y = validation_data
 
         train_acc = self.count_accuracy(train_x, train_y)
         val_acc = self.count_accuracy(val_x, val_y)
 
-        print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (-1, train_acc, val_acc))
+        if verbose == 1:
+            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (-1, train_acc, val_acc))
+
         train_start_time = time.time()
         for epoch in range(n_epochs):
             chunks_x, chunks_y = self._split_data(batch_size, train_x, train_y)
@@ -115,14 +150,20 @@ class MambaNet:
             train_acc = self.count_accuracy(train_x, train_y)
             val_acc = self.count_accuracy(val_x, val_y)
             epoch_end_time = time.time()
-            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, epoch took time: %.5f, from start: %.5f" % \
-                 (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
-        print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
+
+            if verbose == 1:
+                print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, epoch took time: %.5f, from start: %.5f" % \
+                    (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
+        if verbose == 1:
+            print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
 
     def test(self, x, y):
         pass
     
     def count_accuracy(self, x, y):
+
+        if x is None or y is None: return 0.0
+
         predicted_y = self.predict(x)
 
         sparse_predicted_y = np.argmax(predicted_y, axis=0)
