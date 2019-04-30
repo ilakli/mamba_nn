@@ -32,9 +32,9 @@ def main():
     val_x, val_y = get_cifar_dataset("test_batch")
 
     layer1 = BaseLayer(128, "relu", "xavier",
-                       (quadratic_weight_function, d_quadratic_weight_function),
+                       (linear_weight_function, d_linear_weight_function),
                        2,
-                       True,
+                       False,
                        0.0005)
     layer2 = BaseLayer(64, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
@@ -52,7 +52,7 @@ def main():
 
     file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
-    kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, learning_rate=0.01)
+    kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, learning_rate=0.01, n_epochs=10)
 
 if __name__ == '__main__':
     main()

@@ -55,7 +55,8 @@ class BaseLayer:
         # Return: tuple of dw and dx
 
         dZ = self.d_activation_function(previous_derivative, self.Z)
-        db = np.sum(dZ, axis = 1, keepdims = True) if self.include_bias else np.zeros()
+        db = np.sum(dZ, axis = 1, keepdims = True) if self.include_bias \
+            else np.zeros((dZ.shape[0], 1))
 
         dW, dA = self.derivative(dz = dZ)
 
