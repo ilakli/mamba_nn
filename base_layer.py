@@ -37,6 +37,8 @@ class BaseLayer:
         self.weights = []
         self.bias = None
         self.l2_regularization_rate = l2_regularization_rate
+        # self.average_output = None
+        # self.number_of_examples = 0
 
     def forward_calculation(self, A_prev):
         # Arguments:
@@ -47,7 +49,13 @@ class BaseLayer:
         self.derivative = partial(self.d_weight_function, W = self.weights, x = A_prev)
         self.Z = Wx + self.bias if self.include_bias else Wx
 
-        return self.activation_function(self.Z)
+        output = self.activation_function(self.Z)
+
+        # sum1 = np.sum(output, axis=1)
+        # self.average_output = sum1 if self.average_output is None else self.average_output + sum1
+        # self.number_of_examples += output.shape[1]
+
+        return output
 
     def backward_calculation(self, previous_derivative) -> tuple:
         # Arguments:
