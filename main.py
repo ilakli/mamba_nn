@@ -36,37 +36,45 @@ def splitting_function_even_odd(X):
 
 def main():
 
-    kobi = MambaNet(24)
+    kobi = MambaNet(12)
     
     val_x, val_y = get_cifar_dataset("test_batch")
 
-    layer_21 = BaseLayer(64, "relu", "xavier",
-                       (linear_weight_function, d_linear_weight_function),
-                       1,
-                       True)
-    layer_22 = BaseLayer(64, "relu", "xavier",
-                       (linear_weight_function, d_linear_weight_function),
-                       1,
-                       True)
-
-    layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
-    # layer1 = BaseLayer(128, "sigmoid", "tupoi",
+    # layer_21 = BaseLayer(64, "relu", "xavier",
     #                    (linear_weight_function, d_linear_weight_function),
-    #                    2,
-    #                    False,
-    #                    0.0005)
-    layer2 = BaseLayer(64, "relu", "xavier",
+    #                    1,
+    #                    True)
+    # layer_22 = BaseLayer(64, "relu", "xavier",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
+    #                    True)
+
+    #layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
+    # layer1 = BaseLayer(128, "sigmoid", "bengio",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
+    #                    True,
+    #                    0.0001)
+    layer2 = BaseLayer(64, "sigmoid", "bengio",
                        (linear_weight_function, d_linear_weight_function),
                        1,
-                       True)
+                       True,
+                       0.0001)
     # layer2 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_1)
-    layer3 = BaseLayer(10, "relu", "xavier",
+    layer3 = BaseLayer(32, "sigmoid", "bengio",
                        (linear_weight_function, d_linear_weight_function),
                        1,
-                       True)
-    kobi.add(layer1)
+                       True,
+                       0.0001)
+    layer4 = BaseLayer(10, "sigmoid", "bengio",
+                       (linear_weight_function, d_linear_weight_function),
+                       1,
+                       True,
+                       0.0001)
+    # kobi.add(layer1)
     kobi.add(layer2)
     kobi.add(layer3)
+    kobi.add(layer4)
 
     kobi.compile(3072, 10)
 

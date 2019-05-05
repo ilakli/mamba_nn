@@ -19,7 +19,7 @@ class ActivationFunctions:
 
     def dSigmoid(dA, z):
         sigmoid_z = ActivationFunctions.Sigmoid(z)
-        return dA * sigmoid_z * (1 - sigmoid_z)
+        return dA * (sigmoid_z * (1 - sigmoid_z))
 
     registry = {
         "relu": (Relu, dRelu),
