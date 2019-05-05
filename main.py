@@ -72,7 +72,8 @@ def main():
 
     file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
-    kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, learning_rate=0.05, n_epochs=50)
+    kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
+        learning_rate=0.05, n_epochs=50, dump_architecture=True)
 
     # print (kobi.layers[1].average_output / kobi.layers[1].number_of_examples)
 

@@ -37,6 +37,8 @@ class BaseLayer:
         self.weights = []
         self.bias = None
         self.l2_regularization_rate = l2_regularization_rate
+        self.init_func_name = initialization_function
+        self.activ_func_name = activation_function
         # self.average_output = None
         # self.number_of_examples = 0
 

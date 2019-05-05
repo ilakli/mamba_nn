@@ -1,6 +1,11 @@
 from base_layer import *
 from piecewise_layer import *
+from datetime import datetime
+from os.path import join
 import time
+import json
+
+MODEL_DIR = "experiments/"
 
 class MambaNet:
     """
@@ -44,6 +49,8 @@ class MambaNet:
 
     def __init__(self, random_state: int):
         np.random.seed(random_state)
+
+        self.random_state = random_state
         self.layers = []
 
     def add(self, layer):
@@ -83,7 +90,8 @@ class MambaNet:
               dataset_reader,
               n_epochs=50,
               batch_size=100,
-              learning_rate=0.1):
+              learning_rate=0.1,
+              dump_architecture=False):
         
         val_x, val_y = dataset_reader(validation_data_path)
 
@@ -101,11 +109,15 @@ class MambaNet:
                 
                 acc_sum += self.count_accuracy(current_x, current_y)
             
-            avg_acc = acc_sum / len(file_pathes)
+            train_acc = acc_sum / len(file_pathes)
 
             val_acc = self.count_accuracy(val_x, val_y)
 
-            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (epoch, avg_acc, val_acc))
+            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" \
+                % (epoch, train_acc, val_acc))
+
+        if dump_architecture:
+            self.dump_architecture(train_acc, val_acc, n_epochs)
 
     def train(self,
               x, y,
@@ -114,7 +126,8 @@ class MambaNet:
               n_epochs=50,
               batch_size=100,
               learning_rate=0.1,
-              verbose=1):
+              verbose=1,
+              dump_architecture=False):
 
         y = np.array(y)
 
@@ -157,6 +170,9 @@ class MambaNet:
                     (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
         if verbose == 1:
             print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
+        
+        if dump_architecture:
+            self.dump_architecture(train_acc, val_acc, n_epochs)
 
     def test(self, x, y):
         pass
@@ -172,6 +188,43 @@ class MambaNet:
         acc = np.sum(sparse_predicted_y == y) / len(y)
 
         return acc
+
+    def dump_architecture(self, train_acc, val_acc, n_epochs):
+        def get_layer_parameters(layer):
+            def get_base_layer_params(layer):
+                return {
+                    'n_units': layer.number_of_units,
+                    'activation_func': layer.activ_func_name,
+                    'initialization_func': layer.init_func_name,
+                    'weight_func_order': layer.weight_function_order,
+                    'bias': layer.include_bias,
+                    'regularization_rate': layer.l2_regularization_rate
+                }
+
+            if isinstance(layer, BaseLayer):
+                return get_base_layer_params(layer)
+            elif isinstance(layer, BasePieceWiseLayer):
+                return [get_base_layer_params(layer) for layer in layer.layers]
+            else:
+                return {}
+
+        parameters = {
+            'train_acc': round(train_acc, 7),
+            'val_acc': round(val_acc, 7),
+            'n_layers': len(self.layers),
+            'n_epochs': n_epochs,
+            'random_state': self.random_state
+        }
+
+        for index, layer in enumerate(self.layers):
+            layer_parameters = get_layer_parameters(layer)
+            parameters['layer_%d' % (index)] = layer_parameters
+        
+        file_name = datetime.now().strftime("%Y%m%d-%H%M%S")
+        file_name += '-val%d.json' % int(100 * val_acc)
+        file_name = join(MODEL_DIR, file_name)
+        with open(file_name, 'w') as o:
+            json.dump(parameters, o, indent=4 * ' ')
 
     def _get_validation_data(self, data, validation_split):
         # TODO come up with better data split algorithm.
