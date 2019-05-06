@@ -91,9 +91,13 @@ class MambaNet:
               n_epochs=50,
               batch_size=100,
               learning_rate=0.1,
-              dump_architecture=False):
+              dump_architecture=False,
+              stop_len = 5,
+              stop_diff = 0.005):
         
         val_x, val_y = dataset_reader(validation_data_path)
+
+        res_arr = np.array([])
 
         for epoch in range(n_epochs):
             acc_sum = 0.0
@@ -115,9 +119,11 @@ class MambaNet:
 
             print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" \
                 % (epoch, train_acc, val_acc))
+            res_arr = np.append(res_arr, val_acc)
+            if res_arr.size >= stop_len and np.max(res_arr[-stop_len:]) - np.min(res_arr[-stop_len:]) < stop_diff: break
 
         if dump_architecture:
-            self.dump_architecture(train_acc, val_acc, n_epochs)
+            self.dump_architecture(train_acc, val_acc, len(res_arr))
 
     def train(self,
               x, y,
@@ -127,9 +133,12 @@ class MambaNet:
               batch_size=100,
               learning_rate=0.1,
               verbose=1,
-              dump_architecture=False):
+              dump_architecture=False,
+              stop_len = 5,
+              stop_diff = 0.05):
 
         y = np.array(y)
+        res_arr = np.array([])
 
         if not validation_data and validation_split > 0:
             train_x, train_y, val_x, val_y = \
@@ -158,9 +167,9 @@ class MambaNet:
 
                 loss = MambaNet.CrossEntropy(predicted_y, chunk_y)
                 loss_gradient = MambaNet.dCrossEntropy(predicted_y, chunk_y)
-
+                
                 self._do_backprop(loss_gradient, learning_rate)
-            
+
             train_acc = self.count_accuracy(train_x, train_y)
             val_acc = self.count_accuracy(val_x, val_y)
             epoch_end_time = time.time()
@@ -168,6 +177,10 @@ class MambaNet:
             if verbose == 1:
                 print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, epoch took time: %.5f, from start: %.5f" % \
                     (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
+
+            res_arr = np.append(res_arr, val_acc)
+            if res_arr.size >= stop_len and np.max(res_arr[-stop_len:]) - np.min(res_arr[-stop_len:]) < stop_diff: break   
+
         if verbose == 1:
             print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
         
@@ -247,6 +260,8 @@ class MambaNet:
     def _do_backprop(self, loss_gradient, learning_rate):
         gradient = loss_gradient
         for layer in self.layers[::-1]:
+            # print("gradient: ", np.min(gradient), np.max(gradient))
             dA, dW, db = layer.backward_calculation(gradient)
             layer.update_weights(learning_rate, (dW, db))
+            # print("weights : ", np.min(layer.weights), np.max(layer.weights))
             gradient = dA
