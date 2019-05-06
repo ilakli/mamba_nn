@@ -28,7 +28,7 @@ class MambaNet:
         m = y_hat.shape[1]
         p = y_hat.copy()
 
-        log_likelihood = -np.log(p[y, range(m)])
+        log_likelihood = -np.log(p[y, range(m)] + 1e-5)
         loss = np.sum(log_likelihood) / m
 
         return loss

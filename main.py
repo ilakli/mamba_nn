@@ -16,13 +16,14 @@ def d_linear_weight_function(W, x, dz):
     return (np.array(dW), dX)
 
 def quadratic_weight_function(W, x):
-    A = np.matmul(W[0], x**2) + np.matmul(W[1], x)
+    A = np.matmul(W[0], x**2) / 1000 + np.matmul(W[1], x)
     return A
 
 def d_quadratic_weight_function(W, x, dz):
     dW0 = np.matmul(dz, np.transpose(x**2))
     dW1 = np.matmul(dz, x.T)
-    dX = 2 * np.matmul(W[0].T, dz) * x + np.matmul(W[1].T, dz)
+    dX = 2 * np.matmul(W[0].T, dz) * x / 1000 + np.matmul(W[1].T, dz)
+
     return (np.array([dW0, dW1]), dX)
 
 def splitting_function_0(X):
@@ -37,42 +38,44 @@ def splitting_function_even_odd(X):
 def main():
 
     kobi = MambaNet(12)
-    
+
     val_x, val_y = get_cifar_dataset("test_batch")
 
-    # layer_21 = BaseLayer(64, "relu", "xavier",
-    #                    (linear_weight_function, d_linear_weight_function),
-    #                    1,
-    #                    True)
-    # layer_22 = BaseLayer(64, "relu", "xavier",
-    #                    (linear_weight_function, d_linear_weight_function),
-    #                    1,
-    #                    True)
+    layer_21 = BaseLayer(32, "relu", "xavier",
+                       (quadratic_weight_function, d_quadratic_weight_function),
+                       2,
+                       True,
+                       0.001)
+    layer_22 = BaseLayer(32, "relu", "xavier",
+                       (quadratic_weight_function, d_quadratic_weight_function),
+                       2,
+                       True,
+                       0.001)
 
-    #layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
-    # layer1 = BaseLayer(128, "sigmoid", "bengio",
-    #                    (linear_weight_function, d_linear_weight_function),
-    #                    1,
+    layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
+    # layer1 = BaseLayer(64, "sigmoid", "bengio",
+    #                    (quadratic_weight_function, d_quadratic_weight_function),
+    #                    2,
     #                    True,
-    #                    0.0001)
-    layer2 = BaseLayer(64, "sigmoid", "bengio",
+    #                    0.001)
+    layer2 = BaseLayer(64, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
+                       0.001)
     # layer2 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_1)
-    layer3 = BaseLayer(32, "sigmoid", "bengio",
+    layer3 = BaseLayer(32, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
-    layer4 = BaseLayer(10, "sigmoid", "bengio",
+                       0.001)
+    layer4 = BaseLayer(10, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
-    # kobi.add(layer1)
-    kobi.add(layer2)
+                       0.001)
+    kobi.add(layer1)
+    # kobi.add(layer2)
     kobi.add(layer3)
     kobi.add(layer4)
 
@@ -81,7 +84,7 @@ def main():
     file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
     kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-        learning_rate=0.05, n_epochs=50, dump_architecture=True)
+        learning_rate=0.01, n_epochs=50, dump_architecture=True)
 
     # print (kobi.layers[1].average_output / kobi.layers[1].number_of_examples)
 
