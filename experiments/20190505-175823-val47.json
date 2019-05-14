@@ -3,6 +3,7 @@
     "val_acc": 0.4725,
     "n_layers": 3,
     "n_epochs": 50,
+    "learning rate": 0.05,
     "random_state": 24,
     "layer_0": [
         {

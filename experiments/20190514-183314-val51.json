@@ -1,39 +1,31 @@
 {
-    "train_acc": 0.52602,
-    "val_acc": 0.4693,
-    "n_layers": 4,
+    "train_acc": 0.57106,
+    "val_acc": 0.5109,
+    "n_layers": 3,
     "n_epochs": 50,
     "learning rate": 0.05,
-    "random_state": 24,
+    "random_state": 12,
     "layer_0": {
-        "n_units": 128,
+        "n_units": 64,
         "activation_func": "relu",
         "initialization_func": "xavier",
-        "weight_func_order": 1,
+        "weight_func_order": 2,
         "bias": true,
         "regularization_rate": 0.001
     },
     "layer_1": {
-        "n_units": 64,
+        "n_units": 32,
         "activation_func": "relu",
         "initialization_func": "xavier",
-        "weight_func_order": 1,
+        "weight_func_order": 2,
         "bias": true,
         "regularization_rate": 0.001
     },
     "layer_2": {
-        "n_units": 64,
-        "activation_func": "relu",
-        "initialization_func": "xavier",
-        "weight_func_order": 1,
-        "bias": true,
-        "regularization_rate": 0.001
-    },
-    "layer_3": {
         "n_units": 10,
         "activation_func": "relu",
         "initialization_func": "xavier",
-        "weight_func_order": 1,
+        "weight_func_order": 2,
         "bias": true,
         "regularization_rate": 0.001
     }

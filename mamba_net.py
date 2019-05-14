@@ -123,7 +123,7 @@ class MambaNet:
             if res_arr.size >= stop_len and np.max(res_arr[-stop_len:]) - np.min(res_arr[-stop_len:]) < stop_diff: break
 
         if dump_architecture:
-            self.dump_architecture(train_acc, val_acc, len(res_arr))
+            self.dump_architecture(learning_rate, train_acc, val_acc, len(res_arr))
 
     def train(self,
               x, y,
@@ -185,7 +185,7 @@ class MambaNet:
             print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
         
         if dump_architecture:
-            self.dump_architecture(train_acc, val_acc, n_epochs)
+            self.dump_architecture(learning_rate, train_acc, val_acc, n_epochs)
 
     def test(self, x, y):
         pass
@@ -202,7 +202,7 @@ class MambaNet:
 
         return acc
 
-    def dump_architecture(self, train_acc, val_acc, n_epochs):
+    def dump_architecture(self, learning_rate, train_acc, val_acc, n_epochs):
         def get_layer_parameters(layer):
             def get_base_layer_params(layer):
                 return {
@@ -226,6 +226,7 @@ class MambaNet:
             'val_acc': round(val_acc, 7),
             'n_layers': len(self.layers),
             'n_epochs': n_epochs,
+            'learning rate': learning_rate,
             'random_state': self.random_state
         }
 
