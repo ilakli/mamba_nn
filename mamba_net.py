@@ -97,7 +97,8 @@ class MambaNet:
         
         val_x, val_y = dataset_reader(validation_data_path)
 
-        res_arr = np.array([])
+        val_accs = np.array([])
+        train_accs = np.array([])
 
         for epoch in range(n_epochs):
             acc_sum = 0.0
@@ -119,11 +120,19 @@ class MambaNet:
 
             print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" \
                 % (epoch, train_acc, val_acc))
-            res_arr = np.append(res_arr, val_acc)
-            if res_arr.size >= stop_len and np.max(res_arr[-stop_len:]) - np.min(res_arr[-stop_len:]) < stop_diff: break
+
+            val_accs = np.append(val_accs, val_acc)
+            train_accs = np.append(train_accs, train_acc)
+
+            if val_accs.size >= stop_len and np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:]) < stop_diff: break
 
         if dump_architecture:
-            self.dump_architecture(learning_rate, train_acc, val_acc, len(res_arr))
+            indx = val_accs.argmax()
+            self.dump_architecture(
+                learning_rate = learning_rate,
+                train_acc = train_accs[indx],
+                val_acc = val_accs[indx],
+                n_epochs = indx + 1)
 
     def train(self,
               x, y,
@@ -138,7 +147,7 @@ class MambaNet:
               stop_diff = 0.05):
 
         y = np.array(y)
-        res_arr = np.array([])
+        val_accs = np.array([])
 
         if not validation_data and validation_split > 0:
             train_x, train_y, val_x, val_y = \
@@ -178,8 +187,8 @@ class MambaNet:
                 print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, epoch took time: %.5f, from start: %.5f" % \
                     (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
 
-            res_arr = np.append(res_arr, val_acc)
-            if res_arr.size >= stop_len and np.max(res_arr[-stop_len:]) - np.min(res_arr[-stop_len:]) < stop_diff: break   
+            val_accs = np.append(val_accs, val_acc)
+            if val_accs.size >= stop_len and np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:]) < stop_diff: break   
 
         if verbose == 1:
             print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
@@ -225,7 +234,7 @@ class MambaNet:
             'train_acc': round(train_acc, 7),
             'val_acc': round(val_acc, 7),
             'n_layers': len(self.layers),
-            'n_epochs': n_epochs,
+            'n_epochs': int(n_epochs),
             'learning rate': learning_rate,
             'random_state': self.random_state
         }

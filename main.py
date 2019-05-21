@@ -39,15 +39,15 @@ def debug(matrix, text = None):
     print (np.min(matrix), np.max(matrix))
     print ("-" * 20)
 
-def splitting_weight_function_1_point(W, x, split_point = 0.5):
+def splitting_weight_function_1_point(W, x, split_point = 0.5, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_point] = x[x <  split_point]
     x_1[x >= split_point] = x[x >= split_point]
     b_0 = np.zeros(x.shape)
-    b_0[x < split_point] = 0.001
+    b_0[x < split_point] = bias_norm
     b_1 = np.zeros(x.shape)
-    b_1[x >= split_point] = 0.001
+    b_1[x >= split_point] = bias_norm
 
     bias_product = np.matmul(W[2], b_0) + np.matmul(W[3], b_1)
 
@@ -55,15 +55,15 @@ def splitting_weight_function_1_point(W, x, split_point = 0.5):
 
     return np.matmul(W[0], x_0) + np.matmul(W[1], x_1) + bias_product
 
-def d_splitting_weight_function_1_point(W, x, dz, split_point = 0.5):
+def d_splitting_weight_function_1_point(W, x, dz, split_point = 0.5, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_point] = x[x <  split_point]
     x_1[x >= split_point] = x[x >= split_point]
     b_0 = np.zeros(x.shape)
-    b_0[x < split_point] = 0.001
+    b_0[x < split_point] = bias_norm
     b_1 = np.zeros(x.shape)
-    b_1[x >= split_point] = 0.001
+    b_1[x >= split_point] = bias_norm
     dW0 = np.matmul(dz, x_0.T)
     dW1 = np.matmul(dz, x_1.T)
     dW2 = np.matmul(dz, b_0.T)
@@ -108,7 +108,7 @@ def main():
     #                    0.001)
 
     # layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
-    layer1 = BaseLayer(64, "relu", "xavier",
+    layer1 = BaseLayer(32, "relu", "xavier",
                        (splitting_weight_function_1_point, d_splitting_weight_function_1_point),
                        4,
                        False,
@@ -139,7 +139,7 @@ def main():
     file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
     kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-        learning_rate=0.05, n_epochs=50, dump_architecture=True,
+        learning_rate=0.05, n_epochs=2, dump_architecture=True,
         stop_len=100, stop_diff=0.001)
     # print (kobi.layers[1].average_output / kobi.layers[1].number_of_examples)
 
