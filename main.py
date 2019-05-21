@@ -6,6 +6,8 @@ import time
 from functools import reduce
 from datasets import *
 
+DEBUG_MODE = False
+
 def linear_weight_function(W, x):
     A = np.matmul(W[0], x)
     return A
@@ -26,36 +28,58 @@ def d_quadratic_weight_function(W, x, dz):
 
     return (np.array([dW0, dW1]), dX)
 
-def splitting_weight_function_1_point(W, x):
-    x_0 = np.zeros_like(x)
-    x_1 = np.zeros_like(x)
-    x_0[x <  0] = x[x <  0]
-    x_1[x >= 0] = x[x >= 0]
-    # b_0 = np.zeros(x.shape)
-    # b_0[:,:] = 1.0
-    # b_1 = np.zeros(x.shape)
-    # b_1[x >= 0] = 1.0
-    return np.matmul(W[0], x_0) + np.matmul(W[1], x_1) #+ np.matmul(W[2], b_0) #+ np.matmul(W[3], b_1)
+def debug(matrix, text = None):
+    if DEBUG_MODE == False: return
 
-def d_splitting_weight_function_1_point(W, x, dz):
+    if text is not None:
+        print (text)
+
+    print ("zeros: %d/%d, non-zero: %d/%d" % 
+        (np.sum(matrix == 0), matrix.size, np.sum(matrix != 0), matrix.size))
+    print (np.min(matrix), np.max(matrix))
+    print ("-" * 20)
+
+def splitting_weight_function_1_point(W, x, split_point = 0.5):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
-    x_0[x <  0] = x[x <  0]
-    x_1[x >= 0] = x[x >= 0]
-    # b_0 = np.zeros(x.shape)
-    # b_0[:,:] = 1
-    # b_1 = np.zeros(x.shape)
-    # b_1[x >= 0] = 1
+    x_0[x <  split_point] = x[x <  split_point]
+    x_1[x >= split_point] = x[x >= split_point]
+    b_0 = np.zeros(x.shape)
+    b_0[x < split_point] = 0.001
+    b_1 = np.zeros(x.shape)
+    b_1[x >= split_point] = 0.001
+
+    bias_product = np.matmul(W[2], b_0) + np.matmul(W[3], b_1)
+
+    debug(bias_product, "bias")
+
+    return np.matmul(W[0], x_0) + np.matmul(W[1], x_1) + bias_product
+
+def d_splitting_weight_function_1_point(W, x, dz, split_point = 0.5):
+    x_0 = np.zeros_like(x)
+    x_1 = np.zeros_like(x)
+    x_0[x <  split_point] = x[x <  split_point]
+    x_1[x >= split_point] = x[x >= split_point]
+    b_0 = np.zeros(x.shape)
+    b_0[x < split_point] = 0.001
+    b_1 = np.zeros(x.shape)
+    b_1[x >= split_point] = 0.001
     dW0 = np.matmul(dz, x_0.T)
     dW1 = np.matmul(dz, x_1.T)
-    # dW2 = np.matmul(dz, b_0.T)
-    # dW3 = np.matmul(dz, b_0.T)
+    dW2 = np.matmul(dz, b_0.T)
+    dW3 = np.matmul(dz, b_0.T)
+
+    debug(dz, "dz")
+    debug(dW2, "dW2")
+    debug(dW3, "dW3")
+    debug(W, "W")
+
     dX0 = np.matmul(W[0].T, dz)
     dX1 = np.matmul(W[1].T, dz)
     dX  = np.zeros_like(x)
-    dX[ x <  0 ] = dX0 [ x <  0 ]
-    dX[ x >= 0 ] = dX1 [ x >= 0 ]
-    return (np.array([dW0, dW1]), dX)     
+    dX[x <  split_point] = dX0 [x <  split_point]
+    dX[x >= split_point] = dX1 [x >= split_point]
+    return (np.array([dW0, dW1, dW2, dW3]), dX)     
 
 def splitting_function_0(X):
     return np.zeros((X.shape[1]))
@@ -86,7 +110,7 @@ def main():
     # layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
     layer1 = BaseLayer(64, "relu", "xavier",
                        (splitting_weight_function_1_point, d_splitting_weight_function_1_point),
-                       2,
+                       4,
                        False,
                        0.001)
     layer2 = BaseLayer(64, "relu", "xavier",
