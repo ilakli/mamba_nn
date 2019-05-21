@@ -3,7 +3,7 @@ import numpy as np
 from random import randint
 import os.path
 import time
-from functools import reduce
+from functools import reduce, partial
 from datasets import *
 
 DEBUG_MODE = False
@@ -39,47 +39,67 @@ def debug(matrix, text = None):
     print (np.min(matrix), np.max(matrix))
     print ("-" * 20)
 
-def splitting_weight_function_1_point(W, x, split_point = 0.5, bias_norm = 0.01):
+def splitting_weight_function_1_point(W, x, include_bias = True, split_point = 0.5, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_point] = x[x <  split_point]
     x_1[x >= split_point] = x[x >= split_point]
+
     b_0 = np.zeros(x.shape)
     b_0[x < split_point] = bias_norm
     b_1 = np.zeros(x.shape)
     b_1[x >= split_point] = bias_norm
 
-    bias_product = np.matmul(W[2], b_0) + np.matmul(W[3], b_1)
+    weight_product = np.matmul(W[0], x_0) + np.matmul(W[1], x_1)
 
-    debug(bias_product, "bias")
+    if include_bias:
+        bias_product = np.matmul(W[2], b_0) + np.matmul(W[3], b_1)
 
-    return np.matmul(W[0], x_0) + np.matmul(W[1], x_1) + bias_product
+        debug(bias_product, "bias")
 
-def d_splitting_weight_function_1_point(W, x, dz, split_point = 0.5, bias_norm = 0.01):
+        return weight_product + bias_product
+
+    return weight_product
+
+def d_splitting_weight_function_1_point(W, x, dz, include_bias = True, split_point = 0.5, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_point] = x[x <  split_point]
     x_1[x >= split_point] = x[x >= split_point]
+
     b_0 = np.zeros(x.shape)
     b_0[x < split_point] = bias_norm
     b_1 = np.zeros(x.shape)
     b_1[x >= split_point] = bias_norm
+
     dW0 = np.matmul(dz, x_0.T)
     dW1 = np.matmul(dz, x_1.T)
-    dW2 = np.matmul(dz, b_0.T)
-    dW3 = np.matmul(dz, b_0.T)
-
-    debug(dz, "dz")
-    debug(dW2, "dW2")
-    debug(dW3, "dW3")
-    debug(W, "W")
 
     dX0 = np.matmul(W[0].T, dz)
     dX1 = np.matmul(W[1].T, dz)
     dX  = np.zeros_like(x)
     dX[x <  split_point] = dX0 [x <  split_point]
     dX[x >= split_point] = dX1 [x >= split_point]
-    return (np.array([dW0, dW1, dW2, dW3]), dX)     
+
+    debug(dz, "dz")
+    debug(W, "W")
+
+    if include_bias:
+        dW2 = np.matmul(dz, b_0.T)
+        dW3 = np.matmul(dz, b_0.T)
+
+        debug(dW2, "dW2")
+        debug(dW3, "dW3")
+
+        return (np.array([dW0, dW1, dW2, dW3]), dX)
+
+    return (np.array([dW0, dW1]), dX)
+
+biased_splt_w_func_1 = partial(splitting_weight_function_1_point, include_bias = True)
+d_biased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, include_bias = True)
+
+unbiased_splt_w_func_1 = partial(splitting_weight_function_1_point, include_bias = False)
+d_unbiased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, include_bias = False)
 
 def splitting_function_0(X):
     return np.zeros((X.shape[1]))
@@ -108,8 +128,9 @@ def main():
     #                    0.001)
 
     # layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
+
     layer1 = BaseLayer(32, "relu", "xavier",
-                       (splitting_weight_function_1_point, d_splitting_weight_function_1_point),
+                       (biased_splt_w_func_1, d_biased_splt_w_func_1),
                        4,
                        False,
                        0.001)
