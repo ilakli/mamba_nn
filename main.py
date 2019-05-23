@@ -114,8 +114,6 @@ def main():
 
     kobi = MambaNet(12)
 
-    val_x, val_y = get_cifar_dataset("test_batch")
-
     # layer_21 = BaseLayer(32, "relu", "xavier",
     #                    (quadratic_weight_function, d_quadratic_weight_function),
     #                    2,
@@ -129,23 +127,20 @@ def main():
 
     # layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
 
-    layer1 = BaseLayer(32, "relu", "xavier",
+    train_x, train_y = get_fashion_mnist_dataset('fashionmnist/train.csv')
+    test_x, test_y = get_fashion_mnist_dataset('fashionmnist/test.csv')
+
+    layer1 = BaseLayer(64, "relu", "xavier",
                        (biased_splt_w_func_1, d_biased_splt_w_func_1),
                        4,
                        False,
                        0.001)
-    layer2 = BaseLayer(64, "relu", "xavier",
+    layer2 = BaseLayer(32, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
                        0.001)
-    # layer2 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_1)
-    layer3 = BaseLayer(32, "sigmoid", "bengio",
-                       (quadratic_weight_function, d_quadratic_weight_function),
-                       1,
-                       True,
-                       0.00001)
-    layer4 = BaseLayer(10, "relu", "xavier",
+    layer4 = BaseLayer(25, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
@@ -155,13 +150,18 @@ def main():
     # kobi.add(layer3)
     kobi.add(layer4)
 
-    kobi.compile(3072, 10)
+    kobi.compile(784, 25)
+    # kobi.compile(784, 10)
 
-    file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
+    kobi.train(train_x, train_y, (test_x, test_y),
+        learning_rate=0.05, n_epochs=50, dump_architecture=False,
+        stop_diff=0.001, stop_len=100)
 
-    kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-        learning_rate=0.05, n_epochs=2, dump_architecture=True,
-        stop_len=100, stop_diff=0.001)
+    # file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
+
+    # kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
+    #     learning_rate=0.05, n_epochs=50, dump_architecture=True,
+    #     stop_len=100, stop_diff=0.001)
     # print (kobi.layers[1].average_output / kobi.layers[1].number_of_examples)
 
 if __name__ == '__main__':
