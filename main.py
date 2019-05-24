@@ -39,7 +39,7 @@ def debug(matrix, text = None):
     print (np.min(matrix), np.max(matrix))
     print ("-" * 20)
 
-def splitting_weight_function_1_point(W, x, include_bias = True, split_point = 0.5, bias_norm = 0.01):
+def splitting_weight_function_1_point(W, x, include_bias = True, split_point = 0, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_point] = x[x <  split_point]
@@ -61,7 +61,7 @@ def splitting_weight_function_1_point(W, x, include_bias = True, split_point = 0
 
     return weight_product
 
-def d_splitting_weight_function_1_point(W, x, dz, include_bias = True, split_point = 0.5, bias_norm = 0.01):
+def d_splitting_weight_function_1_point(W, x, dz, include_bias = True, split_point = 0, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_point] = x[x <  split_point]
@@ -114,14 +114,14 @@ def main():
 
     kobi = MambaNet(12)
 
-    # layer_21 = BaseLayer(32, "relu", "xavier",
-    #                    (quadratic_weight_function, d_quadratic_weight_function),
-    #                    2,
+    # layer_21 = BaseLayer(64, "relu", "xavier",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
     #                    True,
     #                    0.001)
-    # layer_22 = BaseLayer(32, "relu", "xavier",
-    #                    (quadratic_weight_function, d_quadratic_weight_function),
-    #                    2,
+    # layer_22 = BaseLayer(64, "relu", "xavier",
+    #                    (linear_weight_function, d_linear_weight_function),
+    #                    1,
     #                    True,
     #                    0.001)
 
@@ -130,31 +130,31 @@ def main():
     train_x, train_y = get_fashion_mnist_dataset('fashionmnist/train.csv')
     test_x, test_y = get_fashion_mnist_dataset('fashionmnist/test.csv')
 
-    layer1 = BaseLayer(64, "relu", "xavier",
+    layer1 = BaseLayer(32, "relu", "xavier",
                        (biased_splt_w_func_1, d_biased_splt_w_func_1),
                        4,
                        False,
-                       0.001)
-    layer2 = BaseLayer(32, "relu", "xavier",
+                       0.0001)
+    layer2 = BaseLayer(64, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.001)
-    layer4 = BaseLayer(25, "relu", "xavier",
+                       0.0001)
+    layer4 = BaseLayer(10, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.001)
+                       0.0001)
     kobi.add(layer1)
     kobi.add(layer2)
     # kobi.add(layer3)
     kobi.add(layer4)
 
-    kobi.compile(784, 25)
-    # kobi.compile(784, 10)
+    # kobi.compile(784, 25)
+    kobi.compile(784, 10)
 
     kobi.train(train_x, train_y, (test_x, test_y),
-        learning_rate=0.05, n_epochs=50, dump_architecture=False,
+        learning_rate=0.05, n_epochs=50, dump_architecture=True,
         stop_diff=0.001, stop_len=100)
 
     # file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
