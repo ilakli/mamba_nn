@@ -39,16 +39,16 @@ def debug(matrix, text = None):
     print (np.min(matrix), np.max(matrix))
     print ("-" * 20)
 
-def splitting_weight_function_1_point(W, x, include_bias = True, split_point = 0, bias_norm = 0.01):
+def splitting_weight_function_1_point(W, x, split_vector, include_bias = True, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
-    x_0[x <  split_point] = x[x <  split_point]
-    x_1[x >= split_point] = x[x >= split_point]
+    x_0[x <  split_vector] = x[x <  split_vector]
+    x_1[x >= split_vector] = x[x >= split_vector]
 
     b_0 = np.zeros(x.shape)
-    b_0[x < split_point] = bias_norm
+    b_0[x < split_vector] = bias_norm
     b_1 = np.zeros(x.shape)
-    b_1[x >= split_point] = bias_norm
+    b_1[x >= split_vector] = bias_norm
 
     weight_product = np.matmul(W[0], x_0) + np.matmul(W[1], x_1)
 
@@ -61,16 +61,16 @@ def splitting_weight_function_1_point(W, x, include_bias = True, split_point = 0
 
     return weight_product
 
-def d_splitting_weight_function_1_point(W, x, dz, include_bias = True, split_point = 0, bias_norm = 0.01):
+def d_splitting_weight_function_1_point(W, x, dz, split_vector = 0, include_bias = True,bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
-    x_0[x <  split_point] = x[x <  split_point]
-    x_1[x >= split_point] = x[x >= split_point]
+    x_0[x <  split_vector] = x[x <  split_vector]
+    x_1[x >= split_vector] = x[x >= split_vector]
 
     b_0 = np.zeros(x.shape)
-    b_0[x < split_point] = bias_norm
+    b_0[x < split_vector] = bias_norm
     b_1 = np.zeros(x.shape)
-    b_1[x >= split_point] = bias_norm
+    b_1[x >= split_vector] = bias_norm
 
     dW0 = np.matmul(dz, x_0.T)
     dW1 = np.matmul(dz, x_1.T)
@@ -78,8 +78,8 @@ def d_splitting_weight_function_1_point(W, x, dz, include_bias = True, split_poi
     dX0 = np.matmul(W[0].T, dz)
     dX1 = np.matmul(W[1].T, dz)
     dX  = np.zeros_like(x)
-    dX[x <  split_point] = dX0 [x <  split_point]
-    dX[x >= split_point] = dX1 [x >= split_point]
+    dX[x <  split_vector] = dX0 [x <  split_vector]
+    dX[x >= split_vector] = dX1 [x >= split_vector]
 
     debug(dz, "dz")
     debug(W, "W")
@@ -95,11 +95,15 @@ def d_splitting_weight_function_1_point(W, x, dz, include_bias = True, split_poi
 
     return (np.array([dW0, dW1]), dX)
 
-biased_splt_w_func_1 = partial(splitting_weight_function_1_point, include_bias = True)
-d_biased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, include_bias = True)
+biased_splt_w_func_1 = partial(splitting_weight_function_1_point, 
+    split_vector = np.zeros((3072, 1)), include_bias = True)
+d_biased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, 
+    split_vector = np.zeros((3072, 1)), include_bias = True)
 
-unbiased_splt_w_func_1 = partial(splitting_weight_function_1_point, include_bias = False)
-d_unbiased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, include_bias = False)
+unbiased_splt_w_func_1 = partial(splitting_weight_function_1_point, 
+    split_vector = np.zeros((3072, 1)), include_bias = False)
+d_unbiased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, 
+    split_vector = np.zeros((3072, 1)), include_bias = False)
 
 def splitting_function_0(X):
     return np.zeros((X.shape[1]))
@@ -110,29 +114,60 @@ def splitting_function_mean(X):
 def splitting_function_even_odd(X):
     return np.arange(X.shape[1]) % 2
 
+def learn_piecewise_move_points(model, 
+        file_names,
+        n_it=5, 
+        n_epochs=5, 
+        n_ranges=6,
+        delta=0.01):
+
+    for _ in range(n_it):
+        train_file = random.choice(file_names)
+        data_x, data_y = get_cifar_dataset(train_file)
+
+        predicted_distr = model.predict(data_x)
+        distr_res = np.argmax(predicted_distr, axis=0)
+
+        neg_examples = data_x[:, data_y != distr_res]
+
+        neg_examples_means = np.mean(neg_examples, axis=1)
+
+        splitting_points = np.zeros_like(neg_examples_means)
+        range_length = neg_examples.shape[0] // n_ranges
+
+        left_bound = 0
+        for i in range(1, n_ranges + 1):
+            right_bound = i * range_length
+
+            cur_range_mean = neg_examples_means[left_bound:right_bound].mean()
+            cur_range_mean += delta if cur_range_mean > 0 else -delta
+
+            splitting_points[left_bound:right_bound] = cur_range_mean
+            left_bound = right_bound
+        
+        splitting_points = splitting_points.reshape(-1, 1)
+
+        splt_func = partial(splitting_weight_function_1_point,
+            split_vector = splitting_points, include_bias = False)
+        d_splt_func = partial(d_splitting_weight_function_1_point, 
+            split_vector = splitting_points, include_bias = False)
+
+        model.layers[0].weight_function = splt_func
+        model.layers[0].d_weight_function = d_splt_func
+
+        print ("-----Splitting Point Shifted!!!-----")
+
+        model.train_from_files(file_names, "test_batch", get_cifar_dataset, 
+            learning_rate=0.05, n_epochs=n_epochs, dump_architecture=False,
+            stop_len=100, stop_diff=0.001)
+
 def main():
 
     kobi = MambaNet(12)
 
-    # layer_21 = BaseLayer(64, "relu", "xavier",
-    #                    (linear_weight_function, d_linear_weight_function),
-    #                    1,
-    #                    True,
-    #                    0.001)
-    # layer_22 = BaseLayer(64, "relu", "xavier",
-    #                    (linear_weight_function, d_linear_weight_function),
-    #                    1,
-    #                    True,
-    #                    0.001)
-
-    # layer1 = BasePieceWiseLayer([layer_21, layer_22], splitting_function_mean)
-
-    train_x, train_y = get_fashion_mnist_dataset('fashionmnist/train.csv')
-    test_x, test_y = get_fashion_mnist_dataset('fashionmnist/test.csv')
-
     layer1 = BaseLayer(32, "relu", "xavier",
-                       (biased_splt_w_func_1, d_biased_splt_w_func_1),
-                       4,
+                       (unbiased_splt_w_func_1, d_unbiased_splt_w_func_1),
+                       2,
                        False,
                        0.0001)
     layer2 = BaseLayer(64, "relu", "xavier",
@@ -140,29 +175,24 @@ def main():
                        1,
                        True,
                        0.0001)
-    layer4 = BaseLayer(10, "relu", "xavier",
+    layer3 = BaseLayer(10, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
                        0.0001)
     kobi.add(layer1)
     kobi.add(layer2)
-    # kobi.add(layer3)
-    kobi.add(layer4)
+    kobi.add(layer3)
 
-    # kobi.compile(784, 25)
-    kobi.compile(784, 10)
+    kobi.compile(3072, 10)
 
-    kobi.train(train_x, train_y, (test_x, test_y),
-        learning_rate=0.05, n_epochs=50, dump_architecture=True,
-        stop_diff=0.001, stop_len=100)
+    file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
-    # file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
-
-    # kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-    #     learning_rate=0.05, n_epochs=50, dump_architecture=True,
-    #     stop_len=100, stop_diff=0.001)
-    # print (kobi.layers[1].average_output / kobi.layers[1].number_of_examples)
+    kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
+        learning_rate=0.05, n_epochs=2, dump_architecture=False,
+        stop_len=100, stop_diff=0.001)
+    
+    learn_piecewise_move_points(kobi, file_names, n_epochs=2, n_it=2)
 
 if __name__ == '__main__':
     main()
