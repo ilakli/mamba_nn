@@ -36,8 +36,8 @@ def get_cifar_dataset(batch_name, *args):
     cifar_x = np.transpose(dict[b'data'])
     cifar_y = np.array(dict[b'labels'])
 
-    cifar_x_mean0 = cifar_x - np.mean(cifar_x, axis=0)
-    cifar_x_standardized = cifar_x_mean0 / np.std(cifar_x, axis=0)
+    cifar_x_mean0 = cifar_x - np.mean(cifar_x, axis=1).reshape(cifar_x.shape[0], 1)
+    cifar_x_standardized = cifar_x_mean0 / np.std(cifar_x, axis=1).reshape(cifar_x.shape[0], 1)
 
     return cifar_x_standardized, cifar_y
 
