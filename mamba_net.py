@@ -93,7 +93,19 @@ class MambaNet:
               dump_architecture=False,
               stop_len = 5,
               stop_diff = 0.005):
-        
+        # Arguments:
+        #   file_pathes: [String].
+        #   validation_data_path: String.
+        #   n_epochs: Int.
+        #   batch_size: Int.
+        #   learning_rate: Float.
+        #   dump_architecture: Bool. Flag which controls if user wants to dump
+        #       network architecture as JSON file.
+        #   stop_len: Int. What number of epochs should it watch in order to 
+        #       make early stop.
+        #   stop_diff: Float. Acceptable difference between minimum and maximum
+        #       validation accuracy in last stop_len epochs.
+
         val_x, val_y = dataset_reader(validation_data_path)
 
         val_accs = np.array([])
@@ -146,6 +158,23 @@ class MambaNet:
               dump_architecture=False,
               stop_len = 5,
               stop_diff = 0.05):
+        # Arguments:
+        #   x: [Float][Float]. Number of features x Number of examples.
+        #   y: [Int]. Labels.
+        #   validation_data: Tuple. (validation_x, validation_y).
+        #   validation_split: Float. If validation_data isn't given train data
+        #       is splitted with this ratio.
+        #   n_epochs: Int.
+        #   batch_size: Int.
+        #   learning_rate: Float.
+        #   verbose: Int. Flag to tell what kind of training information does 
+        #       user want to be printed.
+        #   dump_architecture: Bool. Flag which controls if user wants to dump
+        #       network architecture as JSON file.
+        #   stop_len: Int. What number of epochs should it watch in order to 
+        #       make early stop.
+        #   stop_diff: Float. Acceptable difference between minimum and maximum
+        #       validation accuracy in last stop_len epochs.
 
         y = np.array(y)
         val_accs = np.array([])
@@ -204,10 +233,11 @@ class MambaNet:
         if dump_architecture:
             self.dump_architecture(learning_rate, train_acc, val_acc, n_epochs)
 
-    def test(self, x, y):
-        pass
-    
     def count_accuracy(self, x, y):
+        # Counts accuracy for given examples.
+        # Arguments:
+        #   x: [Float][Float]. Number of features x Number of examples.
+        #   y: [Int]. Labels.
 
         if x is None or y is None: return 0.0
 
@@ -220,8 +250,16 @@ class MambaNet:
         return acc
 
     def dump_architecture(self, learning_rate, train_acc, val_acc, n_epochs):
+        # Arguments:
+        #   learning_rate: Float.
+        #   train_acc: Float.
+        #   val_acc: Float.
+        #   n_epochs: Int.
         def get_layer_parameters(layer):
+            # As long as there isn't only one type of layer, this function
+            # handles parameters for different kinds of layers.
             def get_base_layer_params(layer):
+                # Helper function to write all needed parameters in dictionary.                
                 return {
                     'n_units': layer.n_units,
                     'activation_func': layer.activ_func_name,
@@ -258,8 +296,10 @@ class MambaNet:
             json.dump(parameters, o, indent=4 * ' ')
 
     def _get_validation_data(self, data, validation_split):
-        # TODO come up with better data split algorithm.
-
+        # Splits data with validation_split ratio.
+        # Arguments:
+        #   data: Tuple. (x, y).
+        #   validation_split: Float.
         validation_offset = int(len(data[1]) * validation_split)
         val_x = data[0][:, :validation_offset]
         val_y = data[1][:validation_offset]
@@ -269,6 +309,11 @@ class MambaNet:
         return train_x, train_y, val_x, val_y
 
     def _split_data(self, batch_size, x, y):
+        # Splits given data into batches(chunks).
+        # Arguments:
+        #   batch_size: int.
+        #   x: [Float][Float]. Number of features x Number of examples.
+        #   y; [Int]. Labels.
         n_iterations = x.shape[1] // batch_size
         chunks_x = np.array_split(x, n_iterations, axis=1)
         chunks_y = np.array_split(y, n_iterations)
@@ -276,6 +321,9 @@ class MambaNet:
         return chunks_x, chunks_y
 
     def _do_backprop(self, loss_gradient, learning_rate):
+        # Arguments:
+        #   loss_gradient: [Float][Float]. Number of units x Number of examples.
+        #   learning_rate: Float.
         gradient = loss_gradient
         for layer in self.layers[::-1]:
             dA, dW, db = layer.backward_calculation(gradient)

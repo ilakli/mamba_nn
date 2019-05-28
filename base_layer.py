@@ -57,12 +57,12 @@ class BaseLayer:
 
         return output
 
-    def backward_calculation(self, previous_derivative) -> tuple:
+    def backward_calculation(self, prev_derivative) -> tuple:
         # Arguments:
-        #   previous_derivative: List. Derivative of next layer
+        #   prev_derivative: List. Derivative of next layer
         # Return: tuple of dw and dx
 
-        dZ = self.d_activation_function(previous_derivative, self.Z)
+        dZ = self.d_activation_function(prev_derivative, self.Z)
         db = np.sum(dZ, axis = 1, keepdims = True) if self.include_bias \
             else np.zeros((dZ.shape[0], 1))
 

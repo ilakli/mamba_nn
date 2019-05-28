@@ -11,15 +11,20 @@ class BasePieceWiseLayer:
         splitting_function: This is function which splits data for BaseLayers
     """
 
-    # TODO check if number_of_units is equal for layers
     def __init__(self,
                  layers: list,
                  splitting_function):
+        # Arguments:
+        #   layers: [Layer].
+        #   splitting_function: Callable splitting function.
         self.layers = layers
         self.splitting_function = splitting_function
         self.number_of_units = layers[0].number_of_units
 
     def forward_calculation(self, A_prev):
+        # Arguments:
+        #   A_prev: List. Output from previous layer.
+        # Return: single value of forward pass.
         layer_indexes = self.splitting_function(A_prev)
 
         return_array = np.zeros((self.number_of_units, A_prev.shape[1]))
@@ -38,6 +43,9 @@ class BasePieceWiseLayer:
         return return_array
 
     def backward_calculation(self, prev_derivative) -> tuple:
+        # Arguments:
+        #   prev_derivative: List. Derivative of next layer
+        # Return: tuple of (IdA, dW, db)
         layer_indexes = self.layer_indexes
 
         dA = np.zeros((self.prev_layer_shape, prev_derivative.shape[1]))
@@ -63,6 +71,9 @@ class BasePieceWiseLayer:
         return (dA, dW, db)
 
     def update_weights(self, learning_rate, gradient):
+        # Arguments:
+        #   learning_rate: Double.
+        #   gradient: [[Float]]. [dWs, dbs].
         dWs, dbs = gradient
 
         for index, (dW, db) in enumerate(zip(dWs, dbs)):
