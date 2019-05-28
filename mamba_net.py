@@ -42,7 +42,6 @@ class MambaNet:
 
         grad = y_hat.copy()
         grad[y, range(m)] -= 1
-        # grad = np.sum(grad, axis = 1, keepdims=True)
         grad = grad / m
 
         return grad
@@ -68,7 +67,7 @@ class MambaNet:
 
         for layer in self.layers:
             layer.initialize_weights(prev_layer_shape)
-            prev_layer_shape = layer.number_of_units
+            prev_layer_shape = layer.n_units
 
         if prev_layer_shape != output_shape:
             raise Exception("Output layer's shape does not match!")
@@ -111,7 +110,7 @@ class MambaNet:
                     batch_size=batch_size, 
                     learning_rate=learning_rate, 
                     verbose=0)
-                
+
                 acc_sum += self.count_accuracy(current_x, current_y)
             
             train_acc = acc_sum / len(file_pathes)
@@ -124,7 +123,9 @@ class MambaNet:
             val_accs = np.append(val_accs, val_acc)
             train_accs = np.append(train_accs, train_acc)
 
-            if val_accs.size >= stop_len and np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:]) < stop_diff: break
+            long_enough = val_accs.size >= stop_len
+            diff = np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:])
+            if long_enough and diff < stop_diff: break
 
         if dump_architecture:
             indx = val_accs.argmax()
@@ -164,7 +165,8 @@ class MambaNet:
         val_acc = self.count_accuracy(val_x, val_y)
 
         if verbose == 1:
-            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % (-1, train_acc, val_acc))
+            print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f" % \
+                (-1, train_acc, val_acc))
 
         train_start_time = time.time()
         for epoch in range(n_epochs):
@@ -184,14 +186,20 @@ class MambaNet:
             epoch_end_time = time.time()
 
             if verbose == 1:
-                print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, epoch took time: %.5f, from start: %.5f" % \
-                    (epoch, train_acc, val_acc, epoch_end_time - epoch_start_time, epoch_end_time - train_start_time))
+                print ("Epoch %d, Train-Acc: %.5f, Val-Acc:%.5f, "
+                       "epoch took time: %.5f, from start: %.5f" % (
+                            epoch, train_acc, val_acc,
+                            epoch_end_time - epoch_start_time,
+                            epoch_end_time - train_start_time)
+                )
 
             val_accs = np.append(val_accs, val_acc)
-            if val_accs.size >= stop_len and np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:]) < stop_diff: break   
+            long_enough = val_accs.size >= stop_len
+            diff = np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:])
+            if long_enough and diff < stop_diff: break
 
         if verbose == 1:
-            print("Train finished in: %.5f" % (epoch_end_time - train_start_time))
+            print("Finished in: %.5f" % (epoch_end_time - train_start_time))
         
         if dump_architecture:
             self.dump_architecture(learning_rate, train_acc, val_acc, n_epochs)
@@ -215,7 +223,7 @@ class MambaNet:
         def get_layer_parameters(layer):
             def get_base_layer_params(layer):
                 return {
-                    'n_units': layer.number_of_units,
+                    'n_units': layer.n_units,
                     'activation_func': layer.activ_func_name,
                     'initialization_func': layer.init_func_name,
                     'weight_func_order': layer.weight_function_order,
@@ -270,8 +278,6 @@ class MambaNet:
     def _do_backprop(self, loss_gradient, learning_rate):
         gradient = loss_gradient
         for layer in self.layers[::-1]:
-            # print("gradient: ", np.min(gradient), np.max(gradient))
             dA, dW, db = layer.backward_calculation(gradient)
             layer.update_weights(learning_rate, (dW, db))
-            # print("weights : ", np.min(layer.weights), np.max(layer.weights))
             gradient = dA

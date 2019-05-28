@@ -37,10 +37,10 @@ class BasePieceWiseLayer:
 
         return return_array
 
-    def backward_calculation(self, previous_derivative) -> tuple:
+    def backward_calculation(self, prev_derivative) -> tuple:
         layer_indexes = self.layer_indexes
 
-        dA = np.zeros((self.prev_layer_shape, previous_derivative.shape[1]))
+        dA = np.zeros((self.prev_layer_shape, prev_derivative.shape[1]))
         dW, db = [], []
         for index, layer in enumerate(self.layers):
             current_derivative_ind = np.where(layer_indexes == index)[0]
@@ -50,7 +50,7 @@ class BasePieceWiseLayer:
                 db.append([])
                 continue
 
-            current_derivative = previous_derivative[:, current_derivative_ind]
+            current_derivative = prev_derivative[:, current_derivative_ind]
             current_derivative_gradient = layer.backward_calculation(current_derivative)
 
             current_dA, current_dW, current_db = current_derivative_gradient
