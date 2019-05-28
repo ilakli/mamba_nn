@@ -165,21 +165,21 @@ def main():
 
     kobi = MambaNet(12)
 
-    layer1 = BaseLayer(32, "relu", "xavier",
+    layer1 = BaseLayer(64, "relu", "xavier",
                        (unbiased_splt_w_func_1, d_unbiased_splt_w_func_1),
                        2,
                        False,
-                       0.0001)
+                       0.001)
     layer2 = BaseLayer(64, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
+                       0.001)
     layer3 = BaseLayer(10, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
+                       0.001)
     kobi.add(layer1)
     kobi.add(layer2)
     kobi.add(layer3)
@@ -189,10 +189,10 @@ def main():
     file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
     kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-        learning_rate=0.05, n_epochs=2, dump_architecture=False,
+        learning_rate=0.05, n_epochs=25, dump_architecture=False,
         stop_len=100, stop_diff=0.001)
     
-    learn_piecewise_move_points(kobi, file_names, n_epochs=2, n_it=2)
+    learn_piecewise_move_points(kobi, file_names, n_epochs=5, n_it=5)
 
 if __name__ == '__main__':
     main()

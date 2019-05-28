@@ -15,7 +15,7 @@ class WeightInitializators:
                  * np.sqrt(6 / (shape[0] + prev_layer_shape))
 
     def UniformRandom(shape, prev_layer_shape):
-        return 2 * np.random.randn(shape[0], shape[1]) - 1
+        return np.random.uniform(-1,1, size=(shape[0], shape[1]))
 
     registry = {
         "xavier": XavierRelu,
