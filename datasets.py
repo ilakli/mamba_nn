@@ -4,6 +4,10 @@ import numpy as np
 import os.path
 import csv
 
+"""
+    Creates simple dataset, each example has 2 parameters and 
+    label is 0 if first parameter is greater than second else 1.  
+"""
 def create_simple_dataset(*args):
     random.seed(0)
  
@@ -22,7 +26,9 @@ def create_simple_dataset(*args):
     data_x = np.transpose(data_x)
 
     return data_x, data_y
-
+"""
+    Gets one of the train data from cifar-10
+"""
 def get_cifar_dataset(batch_name, *args):
     file_path = os.path.join('cifar-10', batch_name)
 
@@ -36,7 +42,11 @@ def get_cifar_dataset(batch_name, *args):
     cifar_x_standard = cifar_x_mean0 / np.std(cifar_x, axis=1).reshape(-1, 1)
 
     return cifar_x_standard, cifar_y
-
+"""
+    Gets data from fashion mnist dataset
+    Arguments:
+        data_path: path of the csv file.
+"""
 def get_fashion_mnist_dataset(data_path):
     mnist_x, mnist_y = [], []
 

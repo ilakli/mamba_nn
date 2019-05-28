@@ -8,19 +8,43 @@ from datasets import *
 
 DEBUG_MODE = False
 
+# Linear weight function
+# Arguments:
+#   x: input matrix
+#   W: matrix of weight matrices (base_layer.weights)
+# Returns: W*x  
 def linear_weight_function(W, x):
     A = np.matmul(W[0], x)
     return A
 
+# Derivative of linear weight function,
+# gives gradient for weights and inputs.
+# Arguments:
+#   x:  input matrix
+#   W:  matrix of weight matrices (base_layer.weights)
+#   dz: derivative of this layer. 
+# Returns: (dW, dx)  
 def d_linear_weight_function(W, x, dz):
     dW = np.matmul(dz, x.T)
     dX = np.matmul(W[0].T, dz)
     return (np.array(dW), dX)
 
+# Quadratic weight function
+# Arguments:
+#   x: input matrix
+#   W: matrix of weight matrices (base_layer.weights)
+# Returns: W0*(x^2) + W1*x  
 def quadratic_weight_function(W, x):
     A = np.matmul(W[0], x**2) / 100 + np.matmul(W[1], x)
     return A
 
+# Derivative of quadratic weight function, 
+# gives gradient for weights and inputs.
+# Arguments:
+#   x:  input matrix
+#   W:  matrix of weight matrices (base_layer.weights)
+#   dz: derivative of this layer. 
+# Returns: (dW, dx)  
 def d_quadratic_weight_function(W, x, dz):
     dW0 = np.matmul(dz, np.transpose(x**2))
     dW1 = np.matmul(dz, x.T)
@@ -28,7 +52,10 @@ def d_quadratic_weight_function(W, x, dz):
 
     return (np.array([dW0, dW1]), dX)
 
-def debug(matrix, text = None):
+# Debuging weight matrix in the layer.
+# Counting number of dead weights and printing it with the min and 
+# max value of the weight in that matrix.     
+def debug_matrix(matrix, text = None):
     if DEBUG_MODE == False: return
 
     if text is not None:
@@ -39,6 +66,15 @@ def debug(matrix, text = None):
     print (np.min(matrix), np.max(matrix))
     print ("-" * 20)
 
+# This function is used in the layer where for
+# each feature we have 2 linear fucntions 
+# Arguments:
+#   x:  input matrix
+#   W:  matrix of weight matrices (base_layer.weights)
+#   spliting_vector: values of splitting point for each feature
+#   include_bias: tells if this layer has biases or not.
+#   bias_norm: regularizing values of biases.   
+# Returns: fucntion's value
 def splitting_weight_function_1_point(W, x, split_vector, 
         include_bias = True, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
@@ -56,12 +92,22 @@ def splitting_weight_function_1_point(W, x, split_vector,
     if include_bias:
         bias_product = np.matmul(W[2], b_0) + np.matmul(W[3], b_1)
 
-        debug(bias_product, "bias")
+        debug_matrix(bias_product, "bias")
 
         return weight_product + bias_product
 
     return weight_product
 
+# Derivative of the function which is used in the layer
+# where for each feature we have 2 linear fucntions 
+# Arguments:
+#   x:  input matrix
+#   W:  matrix of weight matrices (base_layer.weights)
+#   dz: derivative of this layer. 
+#   spliting_vector: values of splitting point for each feature
+#   include_bias: tells if this layer has biases or not.
+#   bias_norm: regularizing values of biases.   
+# Returns: fucntion's value
 def d_splitting_weight_function_1_point(W, x, dz, split_vector = 0, 
         include_bias = True, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
@@ -83,15 +129,15 @@ def d_splitting_weight_function_1_point(W, x, dz, split_vector = 0,
     dX[x <  split_vector] = dX0 [x <  split_vector]
     dX[x >= split_vector] = dX1 [x >= split_vector]
 
-    debug(dz, "dz")
-    debug(W, "W")
+    debug_matrix(dz, "dz")
+    debug_matrix(W, "W")
 
     if include_bias:
         dW2 = np.matmul(dz, b_0.T)
         dW3 = np.matmul(dz, b_0.T)
 
-        debug(dW2, "dW2")
-        debug(dW3, "dW3")
+        debug_matrix(dW2, "dW2")
+        debug_matrix(dW3, "dW3")
 
         return (np.array([dW0, dW1, dW2, dW3]), dX)
 
@@ -107,15 +153,39 @@ unbiased_splt_w_func_1 = partial(splitting_weight_function_1_point,
 d_unbiased_splt_w_func_1 = partial(d_splitting_weight_function_1_point, 
     split_vector = np.zeros((3072, 1)), include_bias = False)
 
+"""
+    Splitting function is used in the piecewise_layer.
+    This function decides for every input example, which
+    class it belongs to. Should be written by layer creator
+"""
+# Send all examples in one class.
 def splitting_function_0(X):
     return np.zeros((X.shape[1]))
 
+# Divide examples into two classes: one with mean negative
+# other with mean non-negative.
 def splitting_function_mean(X):
     return (np.mean(X, axis=0) > 0).astype(int)
 
+# Divide examples by their indexes.  
 def splitting_function_even_odd(X):
     return np.arange(X.shape[1]) % 2
 
+# This function is used with the neural network which has a layer with 
+# splitting weight function; Function tries to change splitting point 
+# of the layer in the trained model to improve the accuracy. Gets one 
+# random file from given train files, gets all wrong results and moves 
+# the splitting points so that most of the wrong examples end up in new 
+# side of splitting point. Runs more epochs to re-train the model.
+# Arguments:
+#   model: mamba_net model with splitting weight function.
+#   file_names: vector of train data file names.
+#   n_it: number of iterations.
+#   n_epochs: number of epochs in each iteration.
+#   n_ranges: number of ranges in splitting points vector.
+#   delta: this value decides how much new points should be shifted.
+#       greater value means more negative results will be moved into
+#       new side of the splitting point.
 def learn_piecewise_move_points(model, file_names, n_it=5, n_epochs=5, 
         n_ranges=6, delta=0.01):
     for _ in range(n_it):
@@ -162,21 +232,21 @@ def main():
 
     kobi = MambaNet(12)
 
-    layer1 = BaseLayer(32, "relu", "xavier",
+    layer1 = BaseLayer(64, "relu", "xavier",
                        (unbiased_splt_w_func_1, d_unbiased_splt_w_func_1),
                        2,
                        False,
-                       0.0001)
+                       0.001)
     layer2 = BaseLayer(64, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
+                       0.001)
     layer3 = BaseLayer(10, "relu", "xavier",
                        (linear_weight_function, d_linear_weight_function),
                        1,
                        True,
-                       0.0001)
+                       0.001)
     kobi.add(layer1)
     kobi.add(layer2)
     kobi.add(layer3)
@@ -186,10 +256,10 @@ def main():
     file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
 
     kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-        learning_rate=0.05, n_epochs=2, dump_architecture=False,
+        learning_rate=0.05, n_epochs=25, dump_architecture=False,
         stop_len=100, stop_diff=0.001)
     
-    learn_piecewise_move_points(kobi, file_names, n_epochs=2, n_it=2)
+    learn_piecewise_move_points(kobi, file_names, n_epochs=5, n_it=5)
 
 if __name__ == '__main__':
     main()

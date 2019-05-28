@@ -7,6 +7,8 @@ class ActivationFunctions:
     calling get() with function name.
     """
 
+    # ReLu activation function with derivative
+    # See: https://en.wikipedia.org/wiki/Rectifier_(neural_networks)
     def Relu(z):
         return np.maximum(z, 0)
 
@@ -15,6 +17,8 @@ class ActivationFunctions:
         d_z[z <= 0] = 0
         return d_z
 
+    # Sigmoid activation function with derivative
+    # See: https://en.wikipedia.org/wiki/Sigmoid_function    
     def Sigmoid(z):
         return 1. / (1 + np.exp(-z))
 
@@ -22,6 +26,7 @@ class ActivationFunctions:
         sigmoid_z = ActivationFunctions.Sigmoid(z)
         return dA * (sigmoid_z * (1 - sigmoid_z))
 
+    # Map of activation functions
     registry = {
         "relu": (Relu, dRelu),
         "sigmoid": (Sigmoid, dSigmoid)
