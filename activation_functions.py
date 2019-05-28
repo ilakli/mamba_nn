@@ -2,8 +2,9 @@ import numpy as np
 
 class ActivationFunctions:
     """
-    This class provides implementations of activation functions (and their derivatives). 
-    Each of those activation functions should be accesible by calling get() with function name
+    This class provides implementations of activation functions (and their 
+    derivatives). Each of those activation functions should be accesible by 
+    calling get() with function name.
     """
 
     def Relu(z):

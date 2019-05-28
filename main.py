@@ -39,7 +39,8 @@ def debug(matrix, text = None):
     print (np.min(matrix), np.max(matrix))
     print ("-" * 20)
 
-def splitting_weight_function_1_point(W, x, split_vector, include_bias = True, bias_norm = 0.01):
+def splitting_weight_function_1_point(W, x, split_vector, 
+        include_bias = True, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_vector] = x[x <  split_vector]
@@ -61,7 +62,8 @@ def splitting_weight_function_1_point(W, x, split_vector, include_bias = True, b
 
     return weight_product
 
-def d_splitting_weight_function_1_point(W, x, dz, split_vector = 0, include_bias = True,bias_norm = 0.01):
+def d_splitting_weight_function_1_point(W, x, dz, split_vector = 0, 
+        include_bias = True, bias_norm = 0.01):
     x_0 = np.zeros_like(x)
     x_1 = np.zeros_like(x)
     x_0[x <  split_vector] = x[x <  split_vector]
@@ -114,13 +116,8 @@ def splitting_function_mean(X):
 def splitting_function_even_odd(X):
     return np.arange(X.shape[1]) % 2
 
-def learn_piecewise_move_points(model, 
-        file_names,
-        n_it=5, 
-        n_epochs=5, 
-        n_ranges=6,
-        delta=0.01):
-
+def learn_piecewise_move_points(model, file_names, n_it=5, n_epochs=5, 
+        n_ranges=6, delta=0.01):
     for _ in range(n_it):
         train_file = random.choice(file_names)
         data_x, data_y = get_cifar_dataset(train_file)
