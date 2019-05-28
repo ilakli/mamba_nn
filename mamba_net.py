@@ -258,8 +258,6 @@ class MambaNet:
             json.dump(parameters, o, indent=4 * ' ')
 
     def _get_validation_data(self, data, validation_split):
-        # TODO come up with better data split algorithm.
-
         validation_offset = int(len(data[1]) * validation_split)
         val_x = data[0][:, :validation_offset]
         val_y = data[1][:validation_offset]

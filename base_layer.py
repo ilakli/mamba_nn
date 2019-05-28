@@ -17,8 +17,6 @@ class BaseLayer:
             be 1 (linear), 2 (quadratic), ... (polynomial).
         include_bias: Boolean. Whether we should add b or not. 
     """
-
-    # TODO weight initialization function
     def __init__(self, 
                  n_units: int, 
                  activation_function: str, 
@@ -81,6 +79,8 @@ class BaseLayer:
             if self.include_bias else self.bias
 
     def initialize_weights(self, prev_layer_shape):
+        # Arguments:
+        #   prev_layer_shape: Int
         for i in range(self.n_weight_matrices):
             current_weights = self.weight_init(
                 (self.n_units, prev_layer_shape),
