@@ -253,10 +253,10 @@ def main():
 
     kobi.compile(3072, 10)
 
-    file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 6)]
+    file_names = ["data_batch_%s" % (str(ind)) for ind in range(1, 2)]
 
     kobi.train_from_files(file_names, "test_batch", get_cifar_dataset, 
-        learning_rate=0.05, n_epochs=25, dump_architecture=False,
+        learning_rate=0.05, n_epochs=2, dump_architecture=True,
         stop_len=100, stop_diff=0.001)
     
     learn_piecewise_move_points(kobi, file_names, n_epochs=5, n_it=5)

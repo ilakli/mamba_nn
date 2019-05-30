@@ -145,7 +145,9 @@ class MambaNet:
                 learning_rate = learning_rate,
                 train_acc = train_accs[indx],
                 val_acc = val_accs[indx],
-                n_epochs = indx + 1)
+                n_epochs = indx + 1,
+                val_accs = val_accs,
+                train_accs = train_accs)
 
     def train(self,
               x, y,
@@ -178,6 +180,7 @@ class MambaNet:
 
         y = np.array(y)
         val_accs = np.array([])
+        train_accs = np.array([])
 
         if not validation_data and validation_split > 0:
             train_x, train_y, val_x, val_y = \
@@ -223,15 +226,23 @@ class MambaNet:
                 )
 
             val_accs = np.append(val_accs, val_acc)
+            train_accs = np.append(train_accs, train_acc)
             long_enough = val_accs.size >= stop_len
             diff = np.max(val_accs[-stop_len:]) - np.min(val_accs[-stop_len:])
             if long_enough and diff < stop_diff: break
 
         if verbose == 1:
             print("Finished in: %.5f" % (epoch_end_time - train_start_time))
-        
+
         if dump_architecture:
-            self.dump_architecture(learning_rate, train_acc, val_acc, n_epochs)
+            indx = val_accs.argmax()
+            self.dump_architecture(
+                learning_rate = learning_rate,
+                train_acc = train_accs[indx],
+                val_acc = val_accs[indx],
+                n_epochs = indx + 1,
+                val_accs = val_accs,
+                train_accs = train_accs)
 
     def count_accuracy(self, x, y):
         # Counts accuracy for given examples.
@@ -249,7 +260,8 @@ class MambaNet:
 
         return acc
 
-    def dump_architecture(self, learning_rate, train_acc, val_acc, n_epochs):
+    def dump_architecture(self, learning_rate, train_acc, val_acc, n_epochs,
+            val_accs, train_accs):
         # Arguments:
         #   learning_rate: Float.
         #   train_acc: Float.
@@ -264,7 +276,7 @@ class MambaNet:
                     'n_units': layer.n_units,
                     'activation_func': layer.activ_func_name,
                     'initialization_func': layer.init_func_name,
-                    'weight_func_order': layer.weight_function_order,
+                    'n_weight_matrices': layer.n_weight_matrices,
                     'bias': layer.include_bias,
                     'regularization_rate': layer.l2_regularization_rate
                 }
@@ -282,7 +294,9 @@ class MambaNet:
             'n_layers': len(self.layers),
             'n_epochs': int(n_epochs),
             'learning rate': learning_rate,
-            'random_state': self.random_state
+            'random_state': self.random_state,
+            'val_accs': list(val_accs),
+            'train_accs': list(train_accs)
         }
 
         for index, layer in enumerate(self.layers):
