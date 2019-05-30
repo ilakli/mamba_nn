@@ -1,1 +1,5 @@
 # mamba_nn
+mamba_nn stands for Mamba Neural Networks. Why Mamba? Because some of our team members like basketball and one of the best basketball players Kobe Bryant, whose nickname is Black Mamba. Why Neural Networks? Because they are cool, besides whole project is about neural networks. More concretly about trying different modifications of vanilla neural networks. Currently we support three types of modifications: 
+1. Polynomyal(quadratic) weight functions. Instead of doing simple, linear ![equation1](http://www.sciweavers.org/tex2img.php?eq=W%20%2A%20x&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0[/img]) we do ![equation2](http://www.sciweavers.org/tex2img.php?eq=W_%7B1%7D%2A%20x%5E%7B2%7D%2BW_%7B2%7D%2Ax&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0[/img])
+1. Parallel weights. In our layer of network architecture we have two sublayers, each of those sublayers is simple vanilla network layer. Our layer decides which sublayer should handle given input.
+1. Piecewise weight function. Parameters of layer input are multiplied by different weights.
