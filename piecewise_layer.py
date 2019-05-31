@@ -19,7 +19,7 @@ class BasePieceWiseLayer:
         #   splitting_function: Callable splitting function.
         self.layers = layers
         self.splitting_function = splitting_function
-        self.number_of_units = layers[0].number_of_units
+        self.n_units = layers[0].n_units
 
     def forward_calculation(self, A_prev):
         # Arguments:
@@ -27,7 +27,7 @@ class BasePieceWiseLayer:
         # Return: single value of forward pass.
         layer_indexes = self.splitting_function(A_prev)
 
-        return_array = np.zeros((self.number_of_units, A_prev.shape[1]))
+        return_array = np.zeros((self.n_units, A_prev.shape[1]))
         for index, layer in enumerate(self.layers):
             current_data_ind = np.where(layer_indexes == index)[0]
 
