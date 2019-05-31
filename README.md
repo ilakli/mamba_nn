@@ -44,3 +44,14 @@ To successfully train a network you need to do couple of things:
         learning_rate=0.05, n_epochs=50, dump_architecture=True,
         stop_len=100, stop_diff=0.001)
 ```
+# Expanding and Contributing
+There is a lot of room left for expansion. Possible ways to expand are:
+* Create totally new, different kinds of network. One can find example of layer classes in `base_layer.py` and `piecewise_layer.py` files.
+* Create new weight function and integrate in existing layer (or the one you wrote), examples can be seen in `main.py` (`linear_weight_function`, `quadratic_weight_function`, etc.).
+* Add handling for new activation function or weight initialization function.
+* Add another dataset to test modified neural networks on.
+
+If you have any interesting ideas on how to develop the project, please feel free to open an issue and discuss it there, or send pull request directly.
+
+# License
+Anyone is allowed to download, change and redistribute this code for non commercial use only and all the changes should stay public and available.
